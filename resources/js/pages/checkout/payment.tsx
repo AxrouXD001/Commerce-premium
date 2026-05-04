@@ -3,12 +3,14 @@ import { SaleShopBar } from '@/components/sales/sale-shop-bar';
 import { StepIndicator } from '@/components/sales/step-indicator';
 import { Button } from '@/components/ui/button';
 import { setupStripePaymentIntent } from '@/hooks/use-payment';
+import { firstLaravelValidationMessage } from '@/lib/laravel-errors';
 import { formatMoney } from '@/lib/money';
 import type { CheckoutOrderBrief } from '@/types/checkout';
 import { paymentSetupSecretStorageKey } from '@/types/payment';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe, type Appearance, type StripeElementsOptions } from '@stripe/stripe-js';
 import { Head, Link } from '@inertiajs/react';
+import { isAxiosError } from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 
 type CheckoutPaymentPageProps = {
@@ -70,10 +72,15 @@ export default function CheckoutPaymentPage({ order }: CheckoutPaymentPageProps)
 
                 setPublishableKey(pub);
                 setClientSecret(dto.client_secret.trim());
-            } catch {
+            } catch (err) {
                 if (!cancelled) {
+                    const fromApi =
+                        isAxiosError(err) && err.response?.status === 422
+                            ? firstLaravelValidationMessage(err.response.data)
+                            : null;
                     setLoadError(
-                        'No pudimos inicializar Stripe para este pedido. Comprueba que el número de pedido coincide y que sigue pendiente.',
+                        fromApi ??
+                            'No pudimos inicializar Stripe para este pedido. Comprueba que el número de pedido coincide, que sigue pendiente y que volviste desde checkout en esta misma ventana.',
                     );
                 }
             } finally {
