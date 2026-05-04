@@ -1,0 +1,51 @@
+Mejora la página Welcome.tsx (página de inicio en 127.0.0.1:8000).
+Mantén los links existentes (Catálogo, Carrito, Login, Register).
+Aplica los design tokens ya definidos (Playfair Display, DM Sans, accent #F5A623).
+
+== SECCIONES A CONSTRUIR ==
+
+[1] HERO — layout 2 columnas (texto izquierda, visual derecha)
+  Izquierda:
+    - Tag pequeño: "Sistema de Ventas Profesional" con border accent
+    - H1 Playfair Display 56px: "Gestiona tus ventas con total precisión"
+    - Subtítulo DM Sans 18px text-muted, max-w-md
+    - 2 botones: "Explorar catálogo" (accent sólido) + "Iniciar sesión" (outline)
+    - Row de 3 stats: "1,200+ Productos | 99% Uptime | IGV incluido"
+  Derecha:
+    - 3 ProductCards apiladas con rotación y parallax leve (rotate-3, -rotate-2)
+    - Gradiente radial detrás: accent al 8% opacity
+    - Animación float: translateY(-8px) loop 3s ease-in-out
+
+[2] CATEGORÍAS — fila horizontal de íconos
+  - 5-6 categorías con ícono lucide-react + label debajo
+  - Hover: bg-accent/10 border-accent/30 scale-105
+  - Scroll horizontal en mobile
+
+[3] PRODUCTOS DESTACADOS — grid 4 columnas
+  - Título sección: "Más vendidos" en Playfair Display
+  - 4 ProductCards con skeleton loader
+  - Botón "Ver catálogo completo" centrado abajo
+
+[4] BANNER PROMOCIONAL
+  - Fondo: gradiente de accent/20 a transparent
+  - Texto grande: "Oferta de temporada — hasta 30% OFF"
+  - Botón CTA centrado
+
+[5] FOOTER simple
+  - Links: Catálogo, Carrito, Login, Register
+  - Texto: © 2025 NombreSistema. Todos los derechos reservados.
+  - Border-top: 1px solid #2A2A3A
+
+== ANIMACIONES DE ENTRADA ==
+.hero-tag   { animation: fadeUp 0.4s ease both; }
+.hero-title { animation: fadeUp 0.5s 0.1s ease both; }
+.hero-sub   { animation: fadeUp 0.5s 0.2s ease both; }
+.hero-ctas  { animation: fadeUp 0.5s 0.3s ease both; }
+.hero-stats { animation: fadeUp 0.5s 0.4s ease both; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+Muestra el archivo Welcome.tsx completo.
