@@ -45,11 +45,11 @@ export function CartDrawer() {
                     side="right"
                     className="flex w-full max-w-md flex-col border-[#2A2A3A] bg-[#111118] text-[#F0F0F8]"
                 >
+                    <SheetDescription className="sr-only">
+                        Revisa las líneas de tu pedido, cantidades y total antes de ir al checkout.
+                    </SheetDescription>
                     <SheetHeader className="border-b border-white/5 pb-4">
                         <SheetTitle className="font-serif text-xl text-[#F0F0F8]">Tu carrito</SheetTitle>
-                        <SheetDescription className="sr-only">
-                            Revisa las líneas de tu pedido, cantidades y total antes de ir al checkout.
-                        </SheetDescription>
                     </SheetHeader>
                     <div className="mt-4 flex min-h-0 flex-1 flex-col gap-4">
                         {isFetching ? <p className="text-muted-foreground text-sm">Cargando…</p> : null}
