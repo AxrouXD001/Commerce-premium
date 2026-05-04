@@ -29,7 +29,8 @@ export function useProduct(slug: string | undefined, options?: { initialData?: P
         queryKey: ['product', slug],
         enabled: Boolean(slug),
         initialData,
-        staleTime: initialData ? 120_000 : 0,
+        /** Sin caché larga: tras editar/subir imágenes el detalle debe volver a pedir el producto al API. */
+        staleTime: 0,
         queryFn: async () => {
             const { data } = await apiClient.get<ProductDto>(`/v1/products/${slug}`);
 

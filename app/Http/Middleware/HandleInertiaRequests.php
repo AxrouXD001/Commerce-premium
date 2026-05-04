@@ -47,8 +47,35 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user ? [...$user->toArray(), 'roles' => $user->getRoleNames()->values()->all()] : null,
             ],
             'inventory_socket' => [
-                'client_url' => (string) config('services.inventory_socket.client_url', ''),
+                'client_url' => $this->inventorySocketClientUrlForRequest($request),
             ],
         ]);
+    }
+
+    /**
+     * No exponer al front una URL de Socket.IO en loopback (127.0.0.1) cuando el sitio
+     * se sirve en otro host (p. ej. IP pública en EC2): el navegador no puede conectar.
+     */
+    protected function inventorySocketClientUrlForRequest(Request $request): string
+    {
+        $raw = (string) config('services.inventory_socket.client_url', '');
+        if ($raw === '') {
+            return '';
+        }
+
+        $host = parse_url($raw, PHP_URL_HOST);
+        if (! is_string($host) || $host === '') {
+            return $raw;
+        }
+
+        $isLoopback = in_array(strtolower($host), ['localhost', '127.0.0.1', '[::1]'], true);
+        $reqHost = strtolower($request->getHost());
+        $requestIsLocal = in_array($reqHost, ['localhost', '127.0.0.1', '::1'], true);
+
+        if ($isLoopback && ! $requestIsLocal) {
+            return '';
+        }
+
+        return $raw;
     }
 }

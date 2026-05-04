@@ -66,7 +66,7 @@ export default function OrderConfirmation({ order }: OrderConfirmationProps) {
                                 <>
                                     {' '}
                                     Continúa en{' '}
-                                    <Link className="text-foreground font-medium underline" href={route('checkout.payment', order.order_number)}>
+                                    <Link className="text-foreground font-medium underline" href={route('checkout.payment', { order: order.order_number })}>
                                         la pantalla de pago
                                     </Link>{' '}
                                     (usa el mismo navegador que usaste al confirmar el checkout para conservar la clave temporal de cobro).
@@ -106,11 +106,11 @@ export default function OrderConfirmation({ order }: OrderConfirmationProps) {
                             <div className="mt-8 flex flex-wrap gap-3">
                                 {order.status === 'pendiente' ? (
                                     <Button asChild>
-                                        <Link href={route('checkout.payment', order.order_number)}>Ir al pago</Link>
+                                        <Link href={route('checkout.payment', { order: order.order_number })}>Ir al pago</Link>
                                     </Button>
                                 ) : (
                                     <Button asChild variant="outline">
-                                        <Link href={route('orders.receipt', order.order_number)}>Ver recibo</Link>
+                                        <Link href={route('orders.receipt', { order: order.order_number })}>Ver recibo</Link>
                                     </Button>
                                 )}
                                 <Button asChild>

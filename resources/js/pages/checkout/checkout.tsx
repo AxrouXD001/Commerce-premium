@@ -48,7 +48,7 @@ export default function CheckoutPage() {
                     sessionStorage.setItem(paymentSetupSecretStorageKey(order.order_number), order.payment_setup_secret);
                 }
 
-                router.visit(route('checkout.payment', order.order_number));
+                router.visit(route('checkout.payment', { order: order.order_number }));
             },
             onError(err) {
                 if (isAxiosError(err)) {

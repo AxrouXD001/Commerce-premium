@@ -2,11 +2,12 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\Product
+ * @mixin Product
  */
 class ProductResource extends JsonResource
 {
@@ -17,23 +18,27 @@ class ProductResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        /** @var Product $product */
+        $product = $this->resource;
+        $product->loadMissing(['category', 'images', 'variants']);
+
         return [
-            'id' => $this->id,
-            'category_id' => $this->category_id,
-            'name' => $this->name,
-            'slug' => $this->slug,
-            'sku' => $this->sku,
-            'description' => $this->description,
-            'price' => (float) $this->price,
-            'compare_at_price' => $this->compare_at_price !== null ? (float) $this->compare_at_price : null,
-            'stock' => (int) $this->stock,
-            'is_active' => (bool) $this->is_active,
-            'category' => new CategoryResource($this->whenLoaded('category')),
-            'images' => ProductImageResource::collection($this->whenLoaded('images')),
-            'variants' => ProductVariantResource::collection($this->whenLoaded('variants')),
-            'created_at' => $this->created_at?->toIso8601String(),
-            'updated_at' => $this->updated_at?->toIso8601String(),
-            'deleted_at' => $this->deleted_at?->toIso8601String(),
+            'id' => $product->id,
+            'category_id' => $product->category_id,
+            'name' => $product->name,
+            'slug' => $product->slug,
+            'sku' => $product->sku,
+            'description' => $product->description,
+            'price' => (float) $product->price,
+            'compare_at_price' => $product->compare_at_price !== null ? (float) $product->compare_at_price : null,
+            'stock' => (int) $product->stock,
+            'is_active' => (bool) $product->is_active,
+            'category' => $product->category !== null ? new CategoryResource($product->category) : null,
+            'images' => ProductImageResource::collection($product->images),
+            'variants' => ProductVariantResource::collection($product->variants),
+            'created_at' => $product->created_at?->toIso8601String(),
+            'updated_at' => $product->updated_at?->toIso8601String(),
+            'deleted_at' => $product->deleted_at?->toIso8601String(),
         ];
     }
 }

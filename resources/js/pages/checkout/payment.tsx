@@ -125,7 +125,7 @@ export default function CheckoutPaymentPage({ order }: CheckoutPaymentPageProps)
                                     <Link href={route('checkout.index')}>Volver al checkout</Link>
                                 </Button>
                                 <Button asChild variant="outline">
-                                    <Link href={route('orders.confirmation', order.order_number)}>Ver resumen del pedido</Link>
+                                    <Link href={route('orders.confirmation', { order: order.order_number })}>Ver resumen del pedido</Link>
                                 </Button>
                             </div>
                         </div>

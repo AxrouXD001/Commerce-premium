@@ -18,13 +18,34 @@ function canUseInventorySocket(roles?: string[]): boolean {
     return roles.some((r) => r === 'admin' || r === 'vendedor');
 }
 
+/** Evita conectar a ws://127.0.0.1 desde una página servida en IP/dominio público. */
+function clientUrlMatchesPageOrigin(clientUrl: string): boolean {
+    if (typeof window === 'undefined') {
+        return true;
+    }
+
+    try {
+        const { hostname } = new URL(clientUrl, window.location.origin);
+        const loopback = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
+        if (!loopback) {
+            return true;
+        }
+
+        const h = window.location.hostname;
+
+        return h === 'localhost' || h === '127.0.0.1' || h === '[::1]';
+    } catch {
+        return false;
+    }
+}
+
 export function useStockAlert() {
     const { auth, inventory_socket } = usePage<SharedData>().props;
     const clientUrl = typeof inventory_socket === 'object' && inventory_socket !== null && 'client_url' in inventory_socket
         ? String((inventory_socket as { client_url?: string }).client_url ?? '').trim()
         : '';
 
-    const enabled = clientUrl !== '' && canUseInventorySocket(auth.user?.roles);
+    const enabled = clientUrl !== '' && canUseInventorySocket(auth.user?.roles) && clientUrlMatchesPageOrigin(clientUrl);
     const [messages, setMessages] = useState<StockAlertMessage[]>([]);
     const socketRef = useRef<Socket | null>(null);
 

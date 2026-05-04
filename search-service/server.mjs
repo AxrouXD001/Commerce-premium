@@ -22,7 +22,7 @@ function unauthorized(res) {
     sendJson(res, 401, { message: 'Unauthorized' });
 }
 
-function checkInternal(req, res) {
+function checkInternal(req) {
     if (!TOKEN) {
         return true;
     }
@@ -173,7 +173,7 @@ const server = http.createServer((req, res) => {
     }
 
     if (method === 'POST' && url.pathname === '/internal/products') {
-        if (!checkInternal(req, res)) {
+        if (!checkInternal(req)) {
             unauthorized(res);
             return;
         }
@@ -202,7 +202,7 @@ const server = http.createServer((req, res) => {
     }
 
     if (method === 'DELETE' && url.pathname.startsWith('/internal/products/')) {
-        if (!checkInternal(req, res)) {
+        if (!checkInternal(req)) {
             unauthorized(res);
             return;
         }

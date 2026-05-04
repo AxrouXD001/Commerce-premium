@@ -30,8 +30,10 @@ const httpServer = http.createServer((req, res) => {
         try {
             const raw = Buffer.concat(chunks).toString('utf8');
             const body = raw === '' ? {} : JSON.parse(raw);
-            const eventName = typeof body.event === 'string' ? body.event : 'inventory:stock';
-            const { event: _e, ...payload } = body;
+            const bodyObj = typeof body === 'object' && body !== null ? body : {};
+            const eventName = typeof bodyObj.event === 'string' ? bodyObj.event : 'inventory:stock';
+            const payload = { ...bodyObj };
+            delete payload.event;
             io.to('admin').emit(eventName, payload);
             res.statusCode = 204;
             res.end();

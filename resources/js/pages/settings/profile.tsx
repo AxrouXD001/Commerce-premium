@@ -22,16 +22,16 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: boolean; status?: string }) {
     const { auth } = usePage<SharedData>().props;
 
+    const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({
+        name: auth.user?.name ?? '',
+        email: auth.user?.email ?? '',
+    });
+
     if (!auth.user) {
         return null;
     }
 
     const user = auth.user;
-
-    const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({
-        name: user.name,
-        email: user.email,
-    });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();

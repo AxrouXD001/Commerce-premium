@@ -38,7 +38,22 @@ export default [
         },
     },
     {
-        ignores: ['vendor', 'node_modules', 'public', 'bootstrap/ssr', 'tailwind.config.js'],
+        files: ['inventory-socket-service/**/*.mjs', 'notification-service/**/*.mjs', 'search-service/**/*.mjs'],
+        languageOptions: {
+            globals: {
+                ...globals.node,
+            },
+        },
+    },
+    {
+        ignores: [
+            'vendor',
+            'node_modules',
+            'public',
+            'bootstrap/ssr',
+            'tailwind.config.js',
+            'resources/js/ziggy.js',
+        ],
     },
     prettier, // Turn off all rules that might conflict with Prettier
 ];
