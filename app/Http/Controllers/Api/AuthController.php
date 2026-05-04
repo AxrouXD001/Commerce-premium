@@ -9,8 +9,8 @@ use App\Http\Resources\AuthUserResource;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -44,6 +44,7 @@ class AuthController extends Controller
         $validated = $request->validated();
 
         $role = User::defaultRoleNameForNewRegistration();
+        User::ensureSpatieRoleExists($role);
 
         $user = User::create([
             'name' => $validated['name'],

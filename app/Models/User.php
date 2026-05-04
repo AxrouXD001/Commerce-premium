@@ -3,17 +3,19 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     /**
@@ -56,6 +58,14 @@ class User extends Authenticatable
     public static function defaultRoleNameForNewRegistration(): string
     {
         return static::query()->count() === 0 ? 'admin' : 'cliente';
+    }
+
+    /**
+     * Crea el rol en BD si no existe (despliegues que solo ejecutaron migrate, sin seed).
+     */
+    public static function ensureSpatieRoleExists(string $roleName): void
+    {
+        Role::findOrCreate($roleName);
     }
 
     /**
