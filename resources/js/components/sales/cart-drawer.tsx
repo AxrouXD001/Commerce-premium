@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { formatMoney } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/hooks/use-cart';
@@ -47,6 +47,9 @@ export function CartDrawer() {
                 >
                     <SheetHeader className="border-b border-white/5 pb-4">
                         <SheetTitle className="font-serif text-xl text-[#F0F0F8]">Tu carrito</SheetTitle>
+                        <SheetDescription className="sr-only">
+                            Revisa las líneas de tu pedido, cantidades y total antes de ir al checkout.
+                        </SheetDescription>
                     </SheetHeader>
                     <div className="mt-4 flex min-h-0 flex-1 flex-col gap-4">
                         {isFetching ? <p className="text-muted-foreground text-sm">Cargando…</p> : null}

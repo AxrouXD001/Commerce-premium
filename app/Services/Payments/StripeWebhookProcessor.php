@@ -41,7 +41,7 @@ class StripeWebhookProcessor
     /**
      * Consolidación idempotente: webhook Stripe o llamada cliente tras Elements (confirmPayment).
      *
-     * @param  string|null  $stripeEventId Null cuando el origen es el cliente tras confirmación on-session.
+     * @param  string|null  $stripeEventId  Null cuando el origen es el cliente tras confirmación on-session.
      * @return array{receipt_access_token: string, order_number: string}|null Sin Payment interno alineado al intent.
      */
     public function finalizeSucceededPaymentIntent(PaymentIntent $intent, ?string $stripeEventId, ?string $callerSetupPlain): ?array
@@ -53,7 +53,7 @@ class StripeWebhookProcessor
         /** @phpstan-ignore-next-line */
         $currencyStripe = strtolower((string) $intent->currency);
 
-        return DB::transaction(function () use ($intent, $stripeEventId, $callerSetupPlain, $intentId, $amountMinorStripe, $currencyStripe): ?array {
+        $outcome = DB::transaction(function () use ($intent, $stripeEventId, $callerSetupPlain, $intentId, $amountMinorStripe, $currencyStripe): ?array {
             /** @var Payment|null $payment */
             $payment = Payment::query()->where('external_id', $intentId)->lockForUpdate()->first();
 
@@ -73,6 +73,7 @@ class StripeWebhookProcessor
                 }
 
                 return [
+                    'kind' => 'cached',
                     'receipt_access_token' => (string) $existingOrder->receipt_access_token,
                     'order_number' => (string) $existingOrder->order_number,
                 ];
@@ -127,18 +128,51 @@ class StripeWebhookProcessor
 
             $this->inventoryLedger->commitPaidOrder($order->load('items'));
 
-            $relativePdf = $this->receiptPdf->generate($order->fresh(['items']), $payment->fresh());
-            $order->forceFill([
-                'receipt_path' => $relativePdf,
-            ])->save();
-
-            $this->notifyPaymentCompleted->ping($order->fresh(['items']), $payment->fresh());
-
             return [
+                'kind' => 'fresh',
                 'receipt_access_token' => $token,
                 'order_number' => (string) $order->order_number,
+                'order_id' => (int) $order->getKey(),
+                'payment_id' => (int) $payment->getKey(),
             ];
         });
+
+        if ($outcome === null) {
+            return null;
+        }
+
+        if (($outcome['kind'] ?? '') === 'fresh') {
+            /** @var Order $orderForReceipt */
+            $orderForReceipt = Order::query()->findOrFail($outcome['order_id']);
+            /** @var Payment $paymentForReceipt */
+            $paymentForReceipt = Payment::query()->findOrFail($outcome['payment_id']);
+
+            try {
+                $relativePdf = $this->receiptPdf->generate($orderForReceipt->fresh(['items']), $paymentForReceipt->fresh());
+                $orderForReceipt->forceFill([
+                    'receipt_path' => $relativePdf,
+                ])->save();
+            } catch (\Throwable $e) {
+                Log::error('Stripe: fallo al generar PDF de recibo tras cobro confirmado.', [
+                    'order_number' => $outcome['order_number'],
+                    'exception' => $e,
+                ]);
+            }
+
+            try {
+                $this->notifyPaymentCompleted->ping($orderForReceipt->fresh(['items']), $paymentForReceipt->fresh());
+            } catch (\Throwable $e) {
+                Log::warning('Stripe: fallo en notificación post-pago.', [
+                    'order_number' => $outcome['order_number'],
+                    'exception' => $e,
+                ]);
+            }
+        }
+
+        return [
+            'receipt_access_token' => $outcome['receipt_access_token'],
+            'order_number' => $outcome['order_number'],
+        ];
     }
 
     protected function paymentIntentSucceeded(Event $event): void
