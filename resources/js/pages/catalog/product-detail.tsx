@@ -4,13 +4,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCart } from '@/hooks/use-cart';
 import { useProduct } from '@/hooks/use-products';
-import { firstLaravelValidationMessage } from '@/lib/laravel-errors';
+import { summarizeAxiosError } from '@/lib/laravel-errors';
 import { formatMoney } from '@/lib/money';
 import type { SharedData } from '@/types/index';
 import type { ProductDto } from '@/types/catalog';
 import { useCartStore } from '@/stores/use-cart-store';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { isAxiosError } from 'axios';
 import { Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -108,8 +107,8 @@ export default function ProductDetail({ product: initial }: ProductDetailProps) 
             });
             openDrawer();
         } catch (err) {
-            const fromApi = isAxiosError(err) ? firstLaravelValidationMessage(err.response?.data) : null;
-            setAddError(fromApi ?? 'No se pudo agregar al carrito. Intenta de nuevo.');
+            const detail = summarizeAxiosError(err);
+            setAddError(detail ?? 'No se pudo agregar al carrito. Intenta de nuevo.');
         }
     }
 
