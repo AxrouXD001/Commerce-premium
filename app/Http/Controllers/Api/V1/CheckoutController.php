@@ -8,7 +8,6 @@ use App\Http\Resources\OrderResource;
 use App\Services\Ecommerce\CartService;
 use App\Services\Ecommerce\CheckoutService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class CheckoutController extends Controller
 {
@@ -27,9 +26,17 @@ class CheckoutController extends Controller
             $request->user(),
         );
 
-        return OrderResource::make($order)
-            ->additional(['payment_setup_secret' => $paymentSetupSecret])
-            ->response()
-            ->setStatusCode(201);
+        /**
+         * Sin `data` anidado: con `$wrap = null`, `->additional()` fuerza a Laravel a envolver
+         * el recurso en `data` (ver ResourceResponse::wrap), y el cliente espera `order_number`
+         * en la raíz junto a `payment_setup_secret` (mismo criterio que CartResource).
+         */
+        return response()->json(
+            array_merge(
+                OrderResource::make($order)->resolve($request),
+                ['payment_setup_secret' => $paymentSetupSecret]
+            ),
+            201
+        );
     }
 }
