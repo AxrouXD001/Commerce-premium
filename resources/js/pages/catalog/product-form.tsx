@@ -54,10 +54,12 @@ export default function ProductForm({ categories, product }: ProductFormProps) {
         form.transform((data) => ({
             ...data,
             variants: data.variants.filter((r) => r.name.trim() !== '' && r.sku.trim() !== ''),
+            // PHP no rellena $_FILES en PUT multipart; Laravel espera POST + _method (spoof).
+            ...(isEdit ? { _method: 'put' as const } : {}),
         }));
         // Intentionally once per mount — transform runs only on submit.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [isEdit]);
 
     const toggleDeleteImage = (id: number, checked: boolean): void => {
         const set = new Set(form.data.delete_image_ids);
@@ -73,7 +75,7 @@ export default function ProductForm({ categories, product }: ProductFormProps) {
         e.preventDefault();
 
         if (isEdit && product) {
-            form.put(route('catalog.products.update', product.slug), { forceFormData: true });
+            form.post(route('catalog.products.update', product.slug), { forceFormData: true });
 
             return;
         }
