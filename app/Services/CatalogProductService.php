@@ -17,7 +17,7 @@ class CatalogProductService
     public function store(StoreProductRequest $request): Product
     {
         return DB::transaction(function () use ($request): Product {
-            $data = $request->safe()->except(['variants', 'images'])->toArray();
+            $data = $request->safe()->except(['variants', 'images']);
             $data['slug'] = Product::makeUniqueSlug($data['slug'] ?? $data['name']);
             $data['is_active'] = $data['is_active'] ?? true;
 
@@ -36,7 +36,7 @@ class CatalogProductService
     public function update(UpdateProductRequest $request, Product $product): Product
     {
         return DB::transaction(function () use ($request, $product): Product {
-            $data = $request->safe()->except(['variants', 'delete_image_ids', 'images'])->toArray();
+            $data = $request->safe()->except(['variants', 'delete_image_ids', 'images']);
 
             if (array_key_exists('slug', $data)) {
                 $data['slug'] = Product::makeUniqueSlug($data['slug'], $product->id);
