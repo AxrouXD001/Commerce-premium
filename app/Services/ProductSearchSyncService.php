@@ -37,7 +37,7 @@ class ProductSearchSyncService
                 'price_adjustment' => (float) $v->price_adjustment,
                 'stock' => (int) $v->stock,
             ])->values()->all(),
-            'image_urls' => $product->images->map(fn ($i) => $i->url)->values()->all(),
+            'image_urls' => $product->images->map(fn ($i) => $i->absoluteUrl())->values()->all(),
             'updated_at' => $product->updated_at?->toIso8601String(),
         ];
     }

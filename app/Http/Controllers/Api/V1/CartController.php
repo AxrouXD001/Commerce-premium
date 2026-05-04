@@ -26,9 +26,7 @@ class CartController extends Controller
         $this->queueGuestCookie($guestKey);
         $this->cartService->loadCartRelations($cart);
 
-        return CartResource::make($cart)
-            ->additional(['meta' => $this->cartService->totals($cart)])
-            ->response();
+        return CartResource::make($cart)->response();
     }
 
     public function add(CartAddRequest $request): JsonResponse
@@ -47,9 +45,7 @@ class CartController extends Controller
         $cart->refresh();
         $this->cartService->loadCartRelations($cart);
 
-        return CartResource::make($cart)
-            ->additional(['meta' => $this->cartService->totals($cart)])
-            ->response();
+        return CartResource::make($cart)->response();
     }
 
     public function update(CartUpdateRequest $request): JsonResponse
@@ -66,9 +62,7 @@ class CartController extends Controller
         $cart->refresh();
         $this->cartService->loadCartRelations($cart);
 
-        return CartResource::make($cart)
-            ->additional(['meta' => $this->cartService->totals($cart)])
-            ->response();
+        return CartResource::make($cart)->response();
     }
 
     public function remove(CartRemoveRequest $request): JsonResponse
@@ -85,9 +79,7 @@ class CartController extends Controller
         $cart->refresh();
         $this->cartService->loadCartRelations($cart);
 
-        return CartResource::make($cart)
-            ->additional(['meta' => $this->cartService->totals($cart)])
-            ->response();
+        return CartResource::make($cart)->response();
     }
 
     public function applyCoupon(CartCouponRequest $request): JsonResponse
@@ -100,9 +92,7 @@ class CartController extends Controller
         $cart->refresh();
         $this->cartService->loadCartRelations($cart);
 
-        return CartResource::make($cart)
-            ->additional(['meta' => $this->cartService->totals($cart)])
-            ->response();
+        return CartResource::make($cart)->response();
     }
 
     public function removeCoupon(Request $request): JsonResponse
@@ -115,9 +105,7 @@ class CartController extends Controller
         $cart->refresh();
         $this->cartService->loadCartRelations($cart);
 
-        return CartResource::make($cart)
-            ->additional(['meta' => $this->cartService->totals($cart)])
-            ->response();
+        return CartResource::make($cart)->response();
     }
 
     protected function queueGuestCookie(?string $guestKey): void
