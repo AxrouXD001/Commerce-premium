@@ -17,7 +17,15 @@ export function firstLaravelValidationMessage(payload: unknown): string | null {
         return null;
     }
 
-    const preferredKeys = ['stripe', 'payment_setup_secret', 'order', 'order_number'];
+    const preferredKeys = [
+        'product_variant_id',
+        'product_id',
+        'quantity',
+        'stripe',
+        'payment_setup_secret',
+        'order',
+        'order_number',
+    ];
 
     for (const key of preferredKeys) {
         const messages = (errors as Record<string, unknown>)[key];

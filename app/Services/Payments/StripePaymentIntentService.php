@@ -8,7 +8,10 @@ use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\LazyCollection;
 use Illuminate\Validation\ValidationException;
+use Stripe\Exception\ApiErrorException;
 use Stripe\PaymentIntent;
 use Stripe\Stripe;
 
@@ -47,57 +50,74 @@ class StripePaymentIntentService
         $minorExpected = StripeWebhookProcessor::minorAmountFromGrandTotal((string) $order->grand_total);
         $currency = strtolower((string) $order->currency);
 
-        return DB::transaction(function () use ($order, $minorExpected, $currency): array {
-            /** @var \Illuminate\Support\LazyCollection<int, Payment> $stale */
-            $stale = $order->payments()->where('status', PaymentStatus::Pending)->cursor();
+        try {
+            return DB::transaction(function () use ($order, $minorExpected, $currency): array {
+                /** @var LazyCollection<int, Payment> $stale */
+                $stale = $order->payments()->where('status', PaymentStatus::Pending)->cursor();
 
-            foreach ($stale as $oldPayment) {
-                try {
-                    $existingIntent = PaymentIntent::retrieve((string) $oldPayment->external_id);
-                    if (! in_array($existingIntent->status, ['succeeded', 'canceled'], true)) {
-                        $existingIntent->cancel();
+                foreach ($stale as $oldPayment) {
+                    try {
+                        $existingIntent = PaymentIntent::retrieve((string) $oldPayment->external_id);
+                        if (! in_array($existingIntent->status, ['succeeded', 'canceled'], true)) {
+                            $existingIntent->cancel();
+                        }
+                    } catch (ApiErrorException $e) {
+                        Log::warning('stripe.payment_intent.cancel_failed', [
+                            'payment_id' => $oldPayment->getKey(),
+                            'stripe_message' => $e->getMessage(),
+                        ]);
+                    } catch (\Throwable) {
+                        //
                     }
-                } catch (\Throwable) {
-                    //
+
+                    $oldPayment->forceFill([
+                        'status' => PaymentStatus::Failed,
+                        'failure_message' => 'Reemplazado por un nuevo intento de cobro.',
+                    ])->save();
                 }
 
-                $oldPayment->forceFill([
-                    'status' => PaymentStatus::Failed,
-                    'failure_message' => 'Reemplazado por un nuevo intento de cobro.',
-                ])->save();
-            }
-
-            $stripeIntent = PaymentIntent::create([
-                'amount' => $minorExpected,
-                'currency' => $currency,
-                'automatic_payment_methods' => ['enabled' => true],
-                'metadata' => [
-                    'order_id' => (string) $order->getKey(),
-                    'order_number' => $order->order_number,
-                ],
-            ]);
-
-            /** @phpstan-ignore-next-line */
-            $clientSecret = $stripeIntent->client_secret;
-            if (! is_string($clientSecret)) {
-                throw ValidationException::withMessages([
-                    'stripe' => 'Stripe no devolvió client_secret.',
+                $stripeIntent = PaymentIntent::create([
+                    'amount' => $minorExpected,
+                    'currency' => $currency,
+                    'automatic_payment_methods' => ['enabled' => true],
+                    'metadata' => [
+                        'order_id' => (string) $order->getKey(),
+                        'order_number' => $order->order_number,
+                    ],
                 ]);
-            }
 
-            /** @var Payment $payment */
-            $payment = $order->payments()->create([
-                'gateway' => PaymentGateway::Stripe,
-                'external_id' => (string) $stripeIntent->id,
-                'status' => PaymentStatus::Pending,
-                'amount_minor' => $minorExpected,
-                'currency' => strtoupper($currency),
+                /** @phpstan-ignore-next-line */
+                $clientSecret = $stripeIntent->client_secret;
+                if (! is_string($clientSecret)) {
+                    throw ValidationException::withMessages([
+                        'stripe' => 'Stripe no devolvió client_secret.',
+                    ]);
+                }
+
+                /** @var Payment $payment */
+                $payment = $order->payments()->create([
+                    'gateway' => PaymentGateway::Stripe,
+                    'external_id' => (string) $stripeIntent->id,
+                    'status' => PaymentStatus::Pending,
+                    'amount_minor' => $minorExpected,
+                    'currency' => strtoupper($currency),
+                ]);
+
+                return [
+                    'payment' => $payment,
+                    'client_secret' => $clientSecret,
+                ];
+            });
+        } catch (ApiErrorException $e) {
+            Log::warning('stripe.payment_intent.create_failed', [
+                'order_id' => $order->getKey(),
+                'stripe_code' => $e->getStripeCode(),
+                'stripe_message' => $e->getMessage(),
             ]);
 
-            return [
-                'payment' => $payment,
-                'client_secret' => $clientSecret,
-            ];
-        });
+            throw ValidationException::withMessages([
+                'stripe' => 'No pudimos iniciar el cobro con Stripe. Revisa STRIPE_SECRET / STRIPE_KEY en el servidor y que las claves correspondan al mismo modo (prueba vs producción).',
+            ]);
+        }
     }
 }

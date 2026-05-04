@@ -4,11 +4,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCart } from '@/hooks/use-cart';
 import { useProduct } from '@/hooks/use-products';
+import { firstLaravelValidationMessage } from '@/lib/laravel-errors';
 import { formatMoney } from '@/lib/money';
 import type { SharedData } from '@/types/index';
 import type { ProductDto } from '@/types/catalog';
 import { useCartStore } from '@/stores/use-cart-store';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { isAxiosError } from 'axios';
 import { Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -36,6 +38,7 @@ export default function ProductDetail({ product: initial }: ProductDetailProps) 
     const hasVariants = Boolean(p.variants?.length);
 
     const [qty, setQty] = useState(1);
+    const [addError, setAddError] = useState<string | null>(null);
 
     const [variantId, setVariantId] = useState<number | null>(() =>
         hasVariants && p.variants?.[0]?.id ? p.variants[0].id : null,
@@ -74,16 +77,40 @@ export default function ProductDetail({ product: initial }: ProductDetailProps) 
     }, [p.stock, selectedVariant]);
 
     async function handleAddToCart(): Promise<void> {
+        setAddError(null);
+
         if (hasVariants && selectedVariant === null) {
             return;
         }
 
-        await addToCart({
-            product_id: p.id,
-            product_variant_id: selectedVariant ? selectedVariant.id : null,
-            quantity: qty,
-        });
-        openDrawer();
+        const productId = Number(p.id);
+        if (!Number.isFinite(productId)) {
+            setAddError('Producto no válido.');
+            return;
+        }
+
+        const variantPk =
+            selectedVariant !== null && selectedVariant.id !== undefined && selectedVariant.id !== null
+                ? Number(selectedVariant.id)
+                : null;
+        if (variantPk !== null && !Number.isFinite(variantPk)) {
+            setAddError('Variante no válida.');
+            return;
+        }
+
+        const quantity = Math.min(999, Math.max(1, Math.trunc(Number(qty)) || 1));
+
+        try {
+            await addToCart({
+                product_id: productId,
+                product_variant_id: variantPk,
+                quantity,
+            });
+            openDrawer();
+        } catch (err) {
+            const fromApi = isAxiosError(err) ? firstLaravelValidationMessage(err.response?.data) : null;
+            setAddError(fromApi ?? 'No se pudo agregar al carrito. Intenta de nuevo.');
+        }
     }
 
     return (
@@ -184,6 +211,7 @@ export default function ProductDetail({ product: initial }: ProductDetailProps) 
                                     {mutationPending ? 'Agregando…' : 'Agregar al carrito'}
                                 </Button>
                             </div>
+                            {addError ? <p className="text-destructive text-sm">{addError}</p> : null}
                         </div>
                     </div>
                 </div>

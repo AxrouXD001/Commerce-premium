@@ -74,10 +74,7 @@ export default function CheckoutPaymentPage({ order }: CheckoutPaymentPageProps)
                 setClientSecret(dto.client_secret.trim());
             } catch (err) {
                 if (!cancelled) {
-                    const fromApi =
-                        isAxiosError(err) && err.response?.status === 422
-                            ? firstLaravelValidationMessage(err.response.data)
-                            : null;
+                    const fromApi = isAxiosError(err) ? firstLaravelValidationMessage(err.response?.data) : null;
                     setLoadError(
                         fromApi ??
                             'No pudimos inicializar Stripe para este pedido. Comprueba que el número de pedido coincide, que sigue pendiente y que volviste desde checkout en esta misma ventana.',
